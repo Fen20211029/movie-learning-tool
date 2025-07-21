@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>映画学習コンテンツ生成ツール</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .container {
+            display: flex;
+            max-width: 1400px;
+            margin: 20px auto;
+            gap: 20px;
+            padding: 0 20px;
+        }
+        
+        .left-panel, .right-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .left-panel {
+            flex: 1;
+            max-width: 500px;
+        }
+        
+        .right-panel {
+            flex: 2;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .movie-info {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .movie-info input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .subtitle-input {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+        
+        .subtitle-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+        
+        .btn-sample {
+            background: #ed8936;
+            color: white;
+        }
+        
+        .btn-sample:hover {
+            background: #dd6b20;
+        }
+        
+        .scene-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .scene-item {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .scene-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 5px rgba(102, 126, 234, 0.2);
+        }
+        
+        .scene-item.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .scene-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .scene-title {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .confidence-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .confidence-high {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .confidence-medium {
+            background: #ed8936;
+            color: white;
+        }
+        
+        .confidence-low {
+            background: #e53e3e;
+            color: white;
+        }
+        
+        .subtitle-preview {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .challenge-container {
+            margin-top: 20px;
+        }
+        
+        .challenge-item {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .challenge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .challenge-level {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .level-beginner {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+        
+        .level-intermediate {
+            background: #fbd38d;
+            color: #744210;
+        }
+        
+        .level-advanced {
+            background: #fbb6ce;
+            color: #702459;
+        }
+        
+        .dialogue-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        
+        .choices {
+            display: grid;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .choice {
+            padding: 12px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .choice:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .correct-answer {
+            background: #f0fff4;
+            border-color: #48bb78;
+            margin-top: 10px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        .explanation {
+            background: #e6fffa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .similar-expressions {
+            background: #fef5e7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .loading::after {
+            content: '...';
+            display: inline-block;
+            animation: dots 1.5s steps(3, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .left-panel, .right-panel {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 映画学習コンテンツ生成ツール</h1>
+        <p style="margin: 5px 0; opacity: 0.9;">字幕からシーンを抽出し、セリフ完成チャレンジを自動生成</p>
+    </div>
+    
+    <div class="container">
+        <div class="left-panel">
+            <div class="section-title">📝 基本情報</div>
+            <div class="movie-info">
+                <input type="text" id="movieTitle" placeholder="映画タイトル（例：The Devil Wears Prada）">
+                <input type="text" id="movieGenre" placeholder="ジャンル（例：ドラマ、コメディ）">
+            </div>
+            
+            <div class="section-title">📄 字幕データ（SRT形式）</div>
+            <textarea id="subtitleInput" class="subtitle-input" placeholder="SRT形式の字幕データを貼り付けてください...
+
+例：
+1
+00:00:10,500 --> 00:00:13,000
+Miranda: I need you to get me that manuscript.
+
+2
+00:00:13,500 --> 00:00:15,000
+Andy: But that's impossible!"></textarea>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="btn btn-sample" onclick="loadSampleData()">サンプルを読み込む</button>
+                <button class="btn btn-primary" onclick="extractScenes()">シーンを抽出</button>
+            </div>
+            
+            <div class="section-title" style="margin-top: 30px;">🎬 抽出されたシーン</div>
+            <div id="sceneList" class="scene-list">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📽️</div>
+                    <p>字幕データを入力してシーンを抽出してください</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <div class="section-title">🎯 セリフ完成チャレンジ</div>
+            <div id="challengeContainer" class="challenge-container">
+                <div class="empty-state">
+                    <div class="empty-state-icon">✏️</div>
+                    <p>左側でシーンを選択すると、チャレンジが自動生成されます</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // サンプルデータ
+        const sampleData = {
+            title: "The Devil Wears Prada",
+            genre: "ドラマ・コメディ",
+            srt: `1
+00:00:10,500 --> 00:00:13,000
+Miranda: I need you to get me that unpublished Harry Potter manuscript.
+
+2
+00:00:13,500 --> 00:00:15,000
+Andy: But that's impossible!
+
+3
+00:00:15,500 --> 00:00:17,000
+Miranda: Did I ask for your opinion?
+
+4
+00:00:17,500 --> 00:00:20,000
+Miranda: I need results, not excuses.
+
+5
+00:00:20,500 --> 00:00:23,000
+Andy: I understand. I'll do my best to get it.
+
+6
+00:00:23,500 --> 00:00:26,000
+Miranda: Your best? I expect nothing less than success.
+
+7
+00:00:35,000 --> 00:00:37,000
+Emily: Are you okay?
+
+8
+00:00:37,500 --> 00:00:40,000
+Andy: She wants the impossible.
+
+9
+00:00:40,500 --> 00:00:43,000
+Emily: Welcome to the real world of fashion.
+
+10
+00:00:50,000 --> 00:00:52,000
+Nigel: Having a rough day?
+
+11
+00:00:52,500 --> 00:00:55,000
+Andy: Is it always like this?
+
+12
+00:00:55,500 --> 00:00:58,000
+Nigel: Only on days that end in 'Y'.
+
+13
+00:01:05,000 --> 00:01:08,000
+Andy: I can't believe I have to work this weekend.
+
+14
+00:01:08,500 --> 00:01:11,000
+Nate: You promised we'd go to my parents.
+
+15
+00:01:11,500 --> 00:01:14,000
+Andy: I know, but Miranda needs me.
+
+16
+00:01:14,500 --> 00:01:17,000
+Nate: She always needs you.`
+        };
+
+        let extractedScenes = [];
+        let currentScene = null;
+
+        class SubtitleParser {
+            static parseSRT(content) {
+                const subtitles = [];
+                const blocks = content.trim().split(/\n\s*\n/);
+                
+                blocks.forEach(block => {
+                    const lines = block.trim().split('\n');
+                    if (lines.length >= 3) {
+                        const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/);
+                        if (timeMatch) {
+                            subtitles.push({
+                                index: parseInt(lines[0]),
+                                startTime: this.timeToSeconds(timeMatch[1]),
+                                endTime: this.timeToSeconds(timeMatch[2]),
+                                text: lines.slice(2).join(' ')
+                            });
+                        }
+                    }
+                });
+                
+                return subtitles;
+            }
+            
+            static timeToSeconds(timeStr) {
+                const [time, ms] = timeStr.split(',');
+                const [h, m, s] = time.split(':').map(Number);
+                return h * 3600 + m * 60 + s + parseInt(ms) / 1000;
+            }
+            
+            static secondsToTime(seconds) {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = Math.floor(seconds % 60);
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+        }
+
+        class SceneExtractor {
+            constructor(subtitles) {
+                this.subtitles = subtitles;
+            }
+            
+            extractScenes(gapThreshold = 5.0) {
+                const scenes = [];
+                let currentScene = [];
+                
+                this.subtitles.forEach((subtitle, index) => {
+                    if (index > 0) {
+                        const gap = subtitle.startTime - this.subtitles[index - 1].endTime;
+                        if (gap > gapThreshold) {
+                            if (currentScene.length >= 3) {
+                                scenes.push(this.createScene(currentScene, scenes.length + 1));
+                            }
+                            currentScene = [];
+                        }
+                    }
+                    currentScene.push(subtitle);
+                });
+                
+                if (currentScene.length >= 3) {
+                    scenes.push(this.createScene(currentScene, scenes.length + 1));
+                }
+                
+                return scenes;
+            }
+            
+            createScene(subtitles, index) {
+                const dialogueCount = this.countDialogues(subtitles);
+                const duration = subtitles[subtitles.length - 1].endTime - subtitles[0].startTime;
+                const confidence = this.calculateConfidence(subtitles, dialogueCount, duration);
+                
+                return {
+                    id: index,
+                    startTime: subtitles[0].startTime,
+                    endTime: subtitles[subtitles.length - 1].endTime,
+                    duration: duration,
+                    subtitles: subtitles,
+                    dialogueCount: dialogueCount,
+                    confidence: confidence,
+                    situation: this.analyzeSituation(subtitles)
+                };
+            }
+            
+            countDialogues(subtitles) {
+                return subtitles.filter(s => s.text.includes(':')).length;
+            }
+            
+            calculateConfidence(subtitles, dialogueCount, duration) {
+                if (dialogueCount >= 3 && duration >= 10 && duration <= 60) {
+                    return 'high';
+                } else if (dialogueCount >= 2 || (duration >= 5 && duration <= 90)) {
+                    return 'medium';
+                }
+                return 'low';
+            }
+            
+            analyzeSituation(subtitles) {
+                // 簡単な状況分析
+                const firstLine = subtitles[0].text.toLowerCase();
+                if (firstLine.includes('need') || firstLine.includes('want')) {
+                    return '要求・依頼のシーン';
+                } else if (firstLine.includes('sorry') || firstLine.includes('apologize')) {
+                    return '謝罪のシーン';
+                } else if (firstLine.includes('?')) {
+                    return '質問・確認のシーン';
+                }
+                return '会話シーン';
+            }
+        }
+
+        class ChallengeGenerator {
+            static generateChallenges(scene, movieTitle, genre) {
+                const challenges = [];
+                const subtitles = scene.subtitles;
+                
+                // 会話のペアを見つける
+                const dialoguePairs = this.findDialoguePairs(subtitles);
+                
+                // 3つのチャレンジを生成（初級・中級・上級）
+                if (dialoguePairs.length >= 1) {
+                    challenges.push(this.createBeginnerChallenge(dialoguePairs[0], scene));
+                }
+                if (dialoguePairs.length >= 2) {
+                    challenges.push(this.createIntermediateChallenge(dialoguePairs[1] || dialoguePairs[0], scene));
+                }
+                if (dialoguePairs.length >= 1) {
+                    challenges.push(this.createAdvancedChallenge(
+                        dialoguePairs[dialoguePairs.length - 1], 
+                        scene
+                    ));
+                }
+                
+                return challenges;
+            }
+            
+            static findDialoguePairs(subtitles) {
+                const pairs = [];
+                for (let i = 0; i < subtitles.length - 1; i++) {
+                    if (subtitles[i].text.includes(':') && subtitles[i + 1].text.includes(':')) {
+                        pairs.push({
+                            first: subtitles[i],
+                            second: subtitles[i + 1],
+                            index: i
+                        });
+                    }
+                }
+                return pairs;
+            }
+            
+            static createBeginnerChallenge(pair, scene) {
+                const challenges = [
+                    {
+                        situation: "相手の発言に対する最初の反応",
+                        blank: pair.second.text,
+                        options: [
+                            pair.second.text.split(': ')[1],
+                            "I don't understand.",
+                            "Yes, of course.",
+                            "Thank you very much."
+                        ],
+                        correct: 0,
+                        explanation: "この状況では、相手の発言内容に対して適切に反応することが重要です。",
+                        similar: [
+                            "That's right!",
+                            "I see what you mean.",
+                            "That makes sense."
+                        ]
+                    }
+                ];
+                
+                return {
+                    level: 'beginner',
+                    levelText: '初級',
+                    ...challenges[0],
+                    firstLine: pair.first.text
+                };
+            }
+            
+            static createIntermediateChallenge(pair, scene) {
+                // より複雑な選択肢を生成
+                const originalResponse = pair.second.text.split(': ')[1];
+                
+                return {
+                    level: 'intermediate',
+                    levelText: '中級',
+                    situation: "状況に応じた適切な返答",
+                    firstLine: pair.first.text,
+                    blank: pair.second.text,
+                    options: [
+                        originalResponse,
+                        this.generatePlausibleAlternative(originalResponse, 'formal'),
+                        this.generatePlausibleAlternative(originalResponse, 'casual'),
+                        this.generatePlausibleAlternative(originalResponse, 'wrong')
+                    ],
+                    correct: 0,
+                    explanation: "フォーマルさのレベルと文脈を考慮して、最も適切な表現を選ぶ必要があります。",
+                    similar: [
+                        "I understand your point.",
+                        "Let me think about that.",
+                        "I'll see what I can do."
+                    ]
+                };
+            }
+            
+            static createAdvancedChallenge(pair, scene) {
+                const originalResponse = pair.second.text.split(': ')[1];
+                
+                return {
+                    level: 'advanced',
+                    levelText: '上級',
+                    situation: "微妙なニュアンスを含む高度な表現",
+                    firstLine: pair.first.text,
+                    blank: pair.second.text,
+                    options: [
+                        originalResponse,
+                        this.generateNuancedAlternative(originalResponse, 'similar'),
+                        this.generateNuancedAlternative(originalResponse, 'opposite'),
+                        this.generateNuancedAlternative(originalResponse, 'inappropriate')
+                    ],
+                    correct: 0,
+                    explanation: "この表現は特定の感情や態度を微妙に伝えており、状況に最も適した選択が求められます。",
+                    similar: [
+                        "I couldn't agree more.",
+                        "That's precisely my point.",
+                        "I beg to differ."
+                    ]
+                };
+            }
+            
+            static generatePlausibleAlternative(original, type) {
+                // 簡易的な代替文生成
+                const alternatives = {
+                    formal: ["I shall endeavor to comply.", "That would be acceptable.", "I understand your position."],
+                    casual: ["Sure thing!", "Got it!", "No problem!"],
+                    wrong: ["I like pizza.", "The weather is nice.", "See you yesterday."]
+                };
+                
+                return alternatives[type][Math.floor(Math.random() * alternatives[type].length)];
+            }
+            
+            static generateNuancedAlternative(original, type) {
+                const alternatives = {
+                    similar: ["I'll certainly give it my all.", "I'll make every effort.", "I'll do everything in my power."],
+                    opposite: ["That's not my responsibility.", "I can't make any promises.", "That's beyond my capabilities."],
+                    inappropriate: ["Whatever you say, boss.", "If you insist.", "Fine, have it your way."]
+                };
+                
+                return alternatives[type][Math.floor(Math.random() * alternatives[type].length)];
+            }
+        }
+
+        function loadSampleData() {
+            document.getElementById('movieTitle').value = sampleData.title;
+            document.getElementById('movieGenre').value = sampleData.genre;
+            document.getElementById('subtitleInput').value = sampleData.srt;
+        }
+
+        function extractScenes() {
+            const subtitleInput = document.getElementById('subtitleInput').value.trim();
+            if (!subtitleInput) {
+                alert('字幕データを入力してください');
+                return;
+            }
+            
+            try {
+                const subtitles = SubtitleParser.parseSRT(subtitleInput);
+                if (subtitles.length === 0) {
+                    alert('有効な字幕データが見つかりませんでした');
+                    return;
+                }
+                
+                const extractor = new SceneExtractor(subtitles);
+                extractedScenes = extractor.extractScenes();
+                
+                displayScenes();
+            } catch (error) {
+                alert('エラーが発生しました: ' + error.message);
+            }
+        }
+
+        function displayScenes() {
+            const sceneList = document.getElementById('sceneList');
+            sceneList.innerHTML = '';
+            
+            extractedScenes.forEach(scene => {
+                const sceneDiv = document.createElement('div');
+                sceneDiv.className = 'scene-item';
+                sceneDiv.onclick = () => selectScene(scene);
+                
+                sceneDiv.innerHTML = `
+                    <div class="scene-header">
+                        <span class="scene-title">シーン ${scene.id}</span>
+                        <span class="confidence-badge confidence-${scene.confidence}">
+                            ${scene.confidence === 'high' ? '高' : scene.confidence === 'medium' ? '中' : '低'}
+                        </span>
+                    </div>
+                    <div class="subtitle-preview">
+                        ${scene.subtitles.slice(0, 2).map(s => s.text).join(' → ')}
+                        ${scene.subtitles.length > 2 ? '...' : ''}
+                    </div>
+                    <small style="color: #999;">
+                        ${SubtitleParser.secondsToTime(scene.startTime)} - 
+                        ${SubtitleParser.secondsToTime(scene.endTime)}
+                        (${scene.subtitles.length}行)
+                    </small>
+                `;
+                
+                sceneList.appendChild(sceneDiv);
+            });
+        }
+
+        function selectScene(scene) {
+            // 選択状態を更新
+            document.querySelectorAll('.scene-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            currentScene = scene;
+            generateAndDisplayChallenges();
+        }
+
+        function generateAndDisplayChallenges() {
+            const container = document.getElementById('challengeContainer');
+            const movieTitle = document.getElementById('movieTitle').value || '映画';
+            const genre = document.getElementById('movieGenre').value || 'ドラマ';
+            
+            container.innerHTML = '<div class="loading">チャレンジを生成中</div>';
+            
+            setTimeout(() => {
+                const challenges = ChallengeGenerator.generateChallenges(
+                    currentScene, 
+                    movieTitle, 
+                    genre
+                );
+                
+                container.innerHTML = '';
+                
+                if (challenges.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <p>このシーンからチャレンジを生成できませんでした。<br>
+                            別のシーンを選択してください。</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                challenges.forEach((challenge, index) => {
+                    const challengeDiv = document.createElement('div');
+                    challengeDiv.className = 'challenge-item';
+                    
+                    challengeDiv.innerHTML = `
+                        <div class="challenge-header">
+                            <h3>問題 ${index + 1}</h3>
+                            <span class="challenge-level level-${challenge.level}">
+                                ${challenge.levelText}
+                            </span>
+                        </div>
+                        
+                        <p style="color: #666; margin-bottom: 10px;">
+                            <strong>状況:</strong> ${challenge.situation}
+                        </p>
+                        
+                        <div class="dialogue-box">
+                            <div style="margin-bottom: 10px;">A: "${challenge.firstLine}"</div>
+                            <div>B: "_______"</div>
+                        </div>
+                        
+                        <div class="choices">
+                            ${challenge.options.map((option, i) => `
+                                <div class="choice" onclick="showAnswer(${index}, ${i}, ${challenge.correct})">
+                                    ${String.fromCharCode(97 + i)}) ${option}
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div id="answer-${index}" style="display: none;">
+                            <div class="correct-answer">
+                                <strong>正解:</strong> ${String.fromCharCode(97 + challenge.correct)}) ${challenge.options[challenge.correct]}
+                            </div>
+                            
+                            <div class="explanation">
+                                <strong>解説:</strong> ${challenge.explanation}
+                            </div>
+                            
+                            <div class="similar-expressions">
+                                <strong>類似表現:</strong>
+                                <ul style="margin: 5px 0; padding-left: 20px;">
+                                    ${challenge.similar.map(expr => `<li>${expr}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(challengeDiv);
+                });
+            }, 500);
+        }
+
+        function showAnswer(challengeIndex, selectedIndex, correctIndex) {
+            const answerDiv = document.getElementById(`answer-${challengeIndex}`);
+            answerDiv.style.display = 'block';
+            
+            // 選択した答えにスタイルを適用
+            const choices = event.currentTarget.parentElement.querySelectorAll('.choice');
+            choices.forEach((choice, index) => {
+                if (index === correctIndex) {
+                    choice.style.background = '#d4edda';
+                    choice.style.borderColor = '#28a745';
+                } else if (index === selectedIndex && index !== correctIndex) {
+                    choice.style.background = '#f8d7da';
+                    choice.style.borderColor = '#dc3545';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
